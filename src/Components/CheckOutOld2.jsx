@@ -1,5 +1,5 @@
 import Modal from '../UI/Modal.jsx'
-import { use, useActionState } from 'react';
+import { use } from 'react';
 import CartContext from '../Store/CartContext.jsx'
 import { currencyFormatter } from '../utility/currencyFormatter.js';
 import Input from '../UI/Input.jsx';
@@ -18,25 +18,17 @@ const configValues = {
 export default function CheckOut() {
     const cartCtx = use(CartContext);
     const userProgressCtx = use(UserContext);
-
-    const { data, error, fetchingData, clearData } = useHTTP('http://localhost:3000/orders', configValues, null);
+    const { isLoading, data, error, fetchingData, clearData } = useHTTP('http://localhost:3000/orders', configValues, null);
     let totalPrice = cartCtx.items.reduce((totalAmt, item) => { return totalAmt + item.quantity * item.price }, 0);
-
 
     function handleHideCheckout() {
         userProgressCtx.hideCheckout();
     }
 
-    function handleUserConfirmation() {
-        userProgressCtx.hideCheckout();
-        cartCtx.reset();
-        clearData();
-    }
-
-    async function checkoutAction(prevState, formData) {
+    async function checkoutFormAction(formData) {
         const userEnteredData = Object.fromEntries(formData.entries());
 
-        await fetchingData(JSON.stringify({
+        fetchingData(JSON.stringify({
             order: {
                 items: cartCtx.items,
                 customer: userEnteredData
@@ -45,14 +37,19 @@ export default function CheckOut() {
         );
     }
 
-    const [formState, formAction, pending] = useActionState(checkoutAction, null);
+    function handleUserConfirmation() {
+        userProgressCtx.hideCheckout();
+        cartCtx.reset();
+        clearData();
+    }
+
 
     let actions = (<>
         <Buttons textOnly type="button" onClick={handleHideCheckout}>close</Buttons>
         <Buttons >Submit</Buttons></>
     )
 
-    if (pending) {
+    if (isLoading) {
         actions = <span>Form is submitting...</span>
     }
 
@@ -70,7 +67,7 @@ export default function CheckOut() {
 
     return (
         <Modal open={userProgressCtx.progress === 'checkout'} onClose={handleHideCheckout}>
-            <form action={formAction}>
+            <form action={checkoutFormAction}>
                 <h2>Checkout</h2>
                 <p>TotalAmount : {currencyFormatter.format(totalPrice)}</p>
                 <Input label="Full Name" id="name" type="text"></Input>

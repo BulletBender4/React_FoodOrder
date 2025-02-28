@@ -3,7 +3,7 @@ import { currencyFormatter } from "../utility/currencyFormatter";
 import { useContext } from "react";
 import CartContext from "../Store/CartContext";
 
-export default function MealItem({ meal }) {
+export default function MealItem({ meal, isFetching }) {
     const cartCtx = useContext(CartContext);
 
     function handleAddMealToCart() {
